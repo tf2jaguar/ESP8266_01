@@ -35,7 +35,7 @@ void button1_callback(const String &state)
     digitalWrite(RELAY_IO, LOW);
     // 反馈开关状态
     Button1.text("打开");
-    Button1.color("0ddb00");
+    Button1.color("#ffcc00");
     Button1.print("on");
   }
   else if (state == BLINKER_CMD_OFF)
@@ -43,7 +43,7 @@ void button1_callback(const String &state)
     digitalWrite(RELAY_IO, HIGH);
     // 反馈开关状态
     Button1.text("关闭");
-    Button1.color("#fddb00");
+    Button1.color("#94b8b8");
     Button1.print("off");
   }
 }
