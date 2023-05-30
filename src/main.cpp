@@ -14,10 +14,10 @@ char ssid[] = "xxxx"; // 这里要换成你家的wifi名称
 char pswd[] = "xxxx"; // 这里要换成你家的wifi密码
 
 // 数据组件
-BlinkerButton Button1("light_btn"); // 定义开关按钮
-BlinkerNumber HUMI("humi");         // 定义湿度数据键名
-BlinkerNumber TEMP("temp");         // 定义温度数据键名
-BlinkerNumber BETTV("bettv");       // 定义温度数据键名
+BlinkerButton Button1("light_switch"); // 定义开关按钮
+BlinkerNumber HUMI("humi");            // 定义湿度数据键名
+BlinkerNumber TEMP("temp");            // 定义温度数据键名
+BlinkerNumber BETTV("bettv");          // 定义温度数据键名
 
 // 生成DHT对象，参数是引脚和DHT的类型
 DHT dht(DHT_IO, DHT11);
@@ -25,6 +25,24 @@ ADC_MODE(ADC_VCC);
 
 // 定义浮点型全局变量 储存传感器读取的温湿度数据
 float humi_read = 0, temp_read = 0, bettv_read = 0;
+int32_t light_status = 0;
+
+// 反馈开关状态
+void button1_status(int32_t status)
+{
+  if (0 == status)
+  {
+    Button1.text("关闭");
+    Button1.color("#94b8b8");
+    Button1.print("off");
+  }
+  else if (1 == status)
+  {
+    Button1.text("打开");
+    Button1.color("#ffcc00");
+    Button1.print("on");
+  }
+}
 
 // light 按钮回调函数
 void button1_callback(const String &state)
@@ -33,18 +51,14 @@ void button1_callback(const String &state)
   if (state == BLINKER_CMD_ON)
   {
     digitalWrite(RELAY_IO, LOW);
-    // 反馈开关状态
-    Button1.text("打开");
-    Button1.color("0ddb00");
-    Button1.print("on");
+    light_status = 1;
+    button1_status(light_status);
   }
   else if (state == BLINKER_CMD_OFF)
   {
     digitalWrite(RELAY_IO, HIGH);
-    // 反馈开关状态
-    Button1.text("关闭");
-    Button1.color("#fddb00");
-    Button1.print("off");
+    light_status = 0;
+    button1_status(light_status);
   }
 }
 
@@ -60,6 +74,7 @@ void heartbeat()
   HUMI.print(humi_read);
   TEMP.print(temp_read);
   BETTV.print(bettv_read);
+  button1_status(light_status);
 }
 
 // 云存储温湿度数据函数
@@ -77,12 +92,14 @@ void duerPowerState(const String &state)
   if (state == BLINKER_CMD_ON)
   {
     digitalWrite(RELAY_IO, LOW);
+    light_status = 1;
     BlinkerDuerOS.powerState("on");
     BlinkerDuerOS.print();
   }
   else if (state == BLINKER_CMD_OFF)
   {
     digitalWrite(RELAY_IO, HIGH);
+    light_status = 0;
     BlinkerDuerOS.powerState("off");
     BlinkerDuerOS.print();
   }
@@ -133,6 +150,7 @@ void setup()
   // 初始化有LED的IO, 接通时开关打开(不然会有闪烁)
   pinMode(RELAY_IO, OUTPUT);
   digitalWrite(RELAY_IO, LOW);
+  light_status = 1;
 
   // 初始化blinker
   Blinker.begin(auth, ssid, pswd);
@@ -170,5 +188,7 @@ void loop()
   bettv_read = ((float)ESP.getVcc() / 1024.0f);
   BLINKER_LOG("BETTV: ", bettv_read, " v");
 
-  Blinker.delay(5000); // 延时函数
+  button1_status(light_status);
+
+  Blinker.delay(10000); // 延时函数
 }
